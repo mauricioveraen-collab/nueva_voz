@@ -1,0 +1,799 @@
+<!DOCTYPE html>  
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nueva Voz - Conversor IA</title>
+  <style>
+    :root {
+      --bg: #101018;
+      --card: #181826;
+      --accent: #3f8cff;
+      --accent-soft: #3f8cff22;
+      --text: #f5f5f5;
+      --text-soft: #c2c2d2;
+      --border: #2a2a3a;
+      --danger: #ff4b6a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 16px 40px;
+      background: radial-gradient(circle at top, #202040 0, #050510 55%);
+      color: var(--text);
+      position: relative;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.95rem;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+    }
+
+    .box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px #00000040;
+    }
+
+    .box h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+
+    input[type="file"],
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #101020;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    input[type="file"] {
+      padding: 6px;
+    }
+
+    input:focus {
+      outline: 1px solid var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    button {
+      padding: 8px 14px;
+      margin-right: 8px;
+      margin-top: 4px;
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: var(--accent);
+      color: #ffffff;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    button.secondary {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-soft);
+    }
+
+    button.secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    button.danger {
+      background: transparent;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    #result-audio {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    audio {
+      width: 100%;
+    }
+
+    a button {
+      margin-top: 8px;
+    }
+
+    #videoContainer iframe,
+    #shortContainer iframe {
+      border-radius: 10px;
+    }
+
+    small {
+      color: var(--text-soft);
+      font-size: 0.8rem;
+    }
+
+    /* Barra superior: menú de idioma */
+    .lang-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      display: flex;
+      justify-content: flex-end;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      background: #252545;
+      border-radius: 8px;
+      border: 1px solid #444;
+    }
+
+    .lang-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .lang-toggle-btn {
+      padding: 6px 14px;
+      cursor: pointer;
+      background: #101020;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .lang-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    .lang-menu {
+      position: absolute;
+      right: 0;
+      margin-top: 4px;
+      background: #101020;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 4px 0;
+      min-width: 160px;
+      z-index: 1001;
+    }
+
+    .lang-menu.hidden {
+      display: none;
+    }
+
+    .lang-menu button {
+      width: 100%;
+      padding: 6px 12px;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: #f5f5f5;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .lang-menu button:hover {
+      background: #272743;
+    }
+  </style>
+</head>
+<body>
+  <!-- MENÚ DE IDIOMA ARRIBA A LA DERECHA -->
+  <div class="lang-wrapper">
+    <div class="lang-dropdown">
+      <button id="langToggle" class="lang-toggle-btn">Idioma: Español ▾</button>
+      <div id="langMenu" class="lang-menu hidden">
+        <button type="button" data-lang="es">Español</button>
+        <button type="button" data-lang="en">English</button>
+        <button type="button" data-lang="fr">Français</button>
+        <button type="button" data-lang="de">Deutsch</button>
+      </div>
+    </div>
+  </div>
+
+  <h1 id="mainTitle"><span>Nueva</span> Voz</h1>
+  <div class="subtitle" id="subtitle">
+    Sube tu diálogo y la voz que quieres imitar.<br>
+    Obtén un audio listo para escuchar y descargar.
+  </div>
+
+  <!-- 1. AUDIO A TRANSFORMAR -->
+  <div class="box">
+    <h3 id="box1Title">1. Audio con el diálogo (se transformará)</h3>
+    <label for="sourceAudio" id="labelSourceAudio">Sube aquí el audio original</label>
+    <input type="file" id="sourceAudio" accept="audio/*" />
+    <small id="smallSourceExample">Ejemplo: tu voz leyendo el texto.</small>
+
+    <div style="margin-top:8px;">
+      <button type="button" id="recordStartButton" class="secondary">Grabar con micrófono</button>
+      <button type="button" id="recordStopButton" class="secondary" disabled>Detener</button><br>
+      <small id="recordStatus"></small>
+    </div>
+  </div>
+
+  <!-- 2. VOZ OBJETIVO -->
+  <div class="box">
+    <h3 id="box2Title">2. Voz que quieres imitar</h3>
+    <label for="targetAudio" id="labelTargetAudio">Sube aquí la voz objetivo</label>
+    <input type="file" id="targetAudio" accept="audio/*" />
+    <small id="smallTarget">Debe ser la voz que quieres usar como timbre.</small>
+  </div>
+
+  <!-- 3. SHORT + CAPTCHA -->
+  <div class="box">
+    <h3 id="box3Title">3. Ver short y resolver captcha</h3>
+
+    <label id="labelSeeShort">Primero, mira un short de YouTube:</label>
+    <button id="seeShortButton" class="secondary">Ver short obligatorio</button>
+    <button id="unlockShortButton" class="secondary" disabled>Ya vi el short</button>
+    <div id="shortContainer" style="margin-top:10px;"></div>
+    <small id="smallShortHint">Debes ver el short y luego presionar “Ya vi el short” para desbloquear la conversión.</small>
+
+    <hr style="border-color:#2a2a3a;margin:12px 0;" />
+
+    <label for="captchaInput" id="labelCaptcha">Escribe el resultado: 3 + 5 = ?</label>
+    <input type="number" id="captchaInput" placeholder="Respuesta" disabled />
+    <button id="convertButton" disabled>Convertir voz</button>
+  </div>
+
+  <!-- 4. RESULTADO -->
+  <div class="box">
+    <h3 id="box4Title">Resultado</h3>
+    <audio id="result-audio" controls></audio><br />
+    <button id="downloadButton" style="display:none;">Descargar audio modificado</button>
+    <button id="clearButton" class="danger">Borrar resultado</button>
+  </div>
+
+  <!-- 5. DONACIONES -->
+  <div class="box">
+    <h3 id="box5Title">Colaboraciones voluntarias</h3>
+    <p id="supportText" style="margin-top:0;">Si quieres apoyar este proyecto:</p>
+    <a href="https://www.mercadopago.cl" target="_blank">
+      <button class="secondary" id="donateButtonText">Donar vía Mercado Pago</button>
+    </a>
+  </div>
+
+  <!-- 6. YOUTUBE OCULTO (NO SE VE, PERO EL JS SIGUE FUNCIONANDO SI LO REACTIVAS) -->
+  <div class="box" style="display:none;">
+    <h3 id="box6Title">Ver videos de YouTube</h3>
+    <label for="youtubeUrl" id="labelYoutubeUrl">Pega un enlace de YouTube:</label>
+    <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+    <button id="showVideoButton" class="secondary">Mostrar video</button>
+    <div id="videoContainer" style="margin-top:10px;"></div>
+  </div>
+
+  <script>
+    // ========= TEXTOS POR IDIOMA =========
+    const texts = {
+      es: {
+        titleHTML: '<span>Nueva</span> Voz',
+        subtitleHTML: 'Sube tu diálogo y la voz que quieres imitar.<br>Obtén un audio listo para escuchar y descargar.',
+        box1Title: '1. Audio con el diálogo (se transformará)',
+        labelSourceAudio: 'Sube aquí el audio original',
+        smallSourceExample: 'Ejemplo: tu voz leyendo el texto.',
+        recordStart: 'Grabar con micrófono',
+        recordStop: 'Detener',
+        recordStatusRecording: 'Grabando...',
+        recordStatusStopped: 'Grabación detenida. Se usará como audio original.',
+        micError: 'Error: no se pudo acceder al micrófono.',
+        box2Title: '2. Voz que quieres imitar',
+        labelTargetAudio: 'Sube aquí la voz objetivo',
+        smallTarget: 'Debe ser la voz que quieres usar como timbre.',
+        box3Title: '3. Ver short y resolver captcha',
+        labelSeeShort: 'Primero, mira un short de YouTube:',
+        seeShortButton: 'Ver short obligatorio',
+        unlockShortButton: 'Ya vi el short',
+        unlockShortDoneLabel: 'Short desbloqueado',
+        smallShortHint: 'Debes ver el short y luego presionar “Ya vi el short” para desbloquear la conversión.',
+        labelCaptcha: 'Escribe el resultado: 3 + 5 = ?',
+        captchaPlaceholder: 'Respuesta',
+        convertButton: 'Convertir voz',
+        box4Title: 'Resultado',
+        downloadButton: 'Descargar audio modificado',
+        clearButton: 'Borrar resultado',
+        box5Title: 'Colaboraciones voluntarias',
+        supportText: 'Si quieres apoyar este proyecto:',
+        donateButtonText: 'Donar vía Mercado Pago',
+        box6Title: 'Ver videos de YouTube',
+        labelYoutubeUrl: 'Pega un enlace de YouTube:',
+        youtubePlaceholder: 'https://www.youtube.com/watch?v=...',
+        showVideoButton: 'Mostrar video',
+        alertNoShorts: 'No hay shorts configurados todavía.',
+        alertMissingAudios: 'Debes subir ambos audios o grabar el audio original.',
+        alertNeedShort: 'Debes ver el short y pulsar "Ya vi el short" antes de convertir.',
+        alertCaptchaWrong: 'Captcha incorrecto.',
+        alertServer: 'Error en el servidor al convertir la voz.',
+        alertNetwork: 'Error de conexión con el servidor.',
+        alertInvalidYoutube: 'Enlace inválido.',
+        alertCantParseShort: 'No se pudo interpretar el enlace del short.',
+        alertNoResultAudio: 'Primero genera un audio modificado en la sección "Resultado".',
+        langLabel: 'Idioma: Español ▾'
+      },
+      en: {
+        titleHTML: '<span>New</span> Voice',
+        subtitleHTML: 'Upload your dialogue and the voice you want to imitate.<br>Get audio ready to listen and download.',
+        box1Title: '1. Audio with the dialogue (to be transformed)',
+        labelSourceAudio: 'Upload the original audio here',
+        smallSourceExample: 'Example: your voice reading the text.',
+        recordStart: 'Record with microphone',
+        recordStop: 'Stop',
+        recordStatusRecording: 'Recording...',
+        recordStatusStopped: 'Recording stopped. It will be used as original audio.',
+        micError: 'Error: could not access microphone.',
+        box2Title: '2. Voice you want to imitate',
+        labelTargetAudio: 'Upload the target voice here',
+        smallTarget: 'It must be the voice you want to use as tone.',
+        box3Title: '3. Watch a short and solve captcha',
+        labelSeeShort: 'First, watch a YouTube short:',
+        seeShortButton: 'Watch required short',
+        unlockShortButton: 'I watched the short',
+        unlockShortDoneLabel: 'Short unlocked',
+        smallShortHint: 'You must watch the short and then press “I watched the short” to unlock conversion.',
+        labelCaptcha: 'Type the result: 3 + 5 = ?',
+        captchaPlaceholder: 'Answer',
+        convertButton: 'Convert voice',
+        box4Title: 'Result',
+        downloadButton: 'Download modified audio',
+        clearButton: 'Clear result',
+        box5Title: 'Voluntary contributions',
+        supportText: 'If you want to support this project:',
+        donateButtonText: 'Donate via Mercado Pago',
+        box6Title: 'Watch YouTube videos',
+        labelYoutubeUrl: 'Paste a YouTube link:',
+        youtubePlaceholder: 'https://www.youtube.com/watch?v=...',
+        showVideoButton: 'Show video',
+        alertNoShorts: 'There are no shorts configured yet.',
+        alertMissingAudios: 'You must upload both audios or record the original audio.',
+        alertNeedShort: 'You must watch the short and click "I watched the short" before converting.',
+        alertCaptchaWrong: 'Incorrect captcha.',
+        alertServer: 'Server error while converting voice.',
+        alertNetwork: 'Connection error with the server.',
+        alertInvalidYoutube: 'Invalid link.',
+        alertCantParseShort: 'The short link could not be parsed.',
+        alertNoResultAudio: 'First generate a modified audio in the "Result" section.',
+        langLabel: 'Language: English ▾'
+      },
+      fr: {
+        titleHTML: '<span>Nouvelle</span> Voix',
+        subtitleHTML: 'Télécharge ton dialogue et la voix à imiter.<br>Obtiens un audio prêt à écouter et à télécharger.',
+        box1Title: '1. Audio avec le dialogue (à transformer)',
+        labelSourceAudio: 'Télécharge ici l’audio original',
+        smallSourceExample: 'Exemple : ta voix lisant le texte.',
+        recordStart: 'Enregistrer avec le micro',
+        recordStop: 'Arrêter',
+        recordStatusRecording: 'Enregistrement en cours...',
+        recordStatusStopped: 'Enregistrement terminé. Il sera utilisé comme audio original.',
+        micError: 'Erreur : impossible d’accéder au micro.',
+        box2Title: '2. Voix que tu veux imiter',
+        labelTargetAudio: 'Télécharge ici la voix cible',
+        smallTarget: 'Ce doit être la voix que tu veux utiliser comme timbre.',
+        box3Title: '3. Regarder un short et résoudre le captcha',
+        labelSeeShort: 'D’abord, regarde un short YouTube :',
+        seeShortButton: 'Voir le short obligatoire',
+        unlockShortButton: 'J’ai vu le short',
+        unlockShortDoneLabel: 'Short débloqué',
+        smallShortHint: 'Tu dois regarder le short puis cliquer sur « J’ai vu le short » pour débloquer la conversion.',
+        labelCaptcha: 'Écris le résultat : 3 + 5 = ?',
+        captchaPlaceholder: 'Réponse',
+        convertButton: 'Convertir la voix',
+        box4Title: 'Résultat',
+        downloadButton: 'Télécharger l’audio modifié',
+        clearButton: 'Effacer le résultat',
+        box5Title: 'Contributions volontaires',
+        supportText: 'Si tu veux soutenir ce projet :',
+        donateButtonText: 'Donner via Mercado Pago',
+        box6Title: 'Voir des vidéos YouTube',
+        labelYoutubeUrl: 'Colle un lien YouTube :',
+        youtubePlaceholder: 'https://www.youtube.com/watch?v=...',
+        showVideoButton: 'Afficher la vidéo',
+        alertNoShorts: 'Aucun short n’est encore configuré.',
+        alertMissingAudios: 'Tu dois télécharger les deux audios ou enregistrer l’audio original.',
+        alertNeedShort: 'Tu dois regarder le short puis cliquer sur « J’ai vu le short » avant de convertir.',
+        alertCaptchaWrong: 'Captcha incorrect.',
+        alertServer: 'Erreur du serveur lors de la conversion de la voix.',
+        alertNetwork: 'Erreur de connexion avec le serveur.',
+        alertInvalidYoutube: 'Lien invalide.',
+        alertCantParseShort: 'Le lien du short n’a pas pu être interprété.',
+        alertNoResultAudio: 'Commence par générer un audio modifié dans la section « Résultat ».',
+        langLabel: 'Langue : Français ▾'
+      },
+      de: {
+        titleHTML: '<span>Neue</span> Stimme',
+        subtitleHTML: 'Lade deinen Dialog und die Stimme hoch, die du imitieren möchtest.<br>Erhalte eine abspiel- und downloadfertige Audiodatei.',
+        box1Title: '1. Audio mit dem Dialog (wird umgewandelt)',
+        labelSourceAudio: 'Lade hier das Originalaudio hoch',
+        smallSourceExample: 'Beispiel: deine Stimme, die den Text liest.',
+        recordStart: 'Mit Mikrofon aufnehmen',
+        recordStop: 'Stopp',
+        recordStatusRecording: 'Aufnahme läuft...',
+        recordStatusStopped: 'Aufnahme beendet. Sie wird als Originalaudio verwendet.',
+        micError: 'Fehler: Kein Zugriff auf das Mikrofon.',
+        box2Title: '2. Stimme, die du imitieren willst',
+        labelTargetAudio: 'Lade hier die Zielstimme hoch',
+        smallTarget: 'Es muss die Stimme sein, die du als Klangfarbe verwenden willst.',
+        box3Title: '3. Short ansehen und Captcha lösen',
+        labelSeeShort: 'Sieh dir zuerst ein YouTube-Short an:',
+        seeShortButton: 'Pflicht-Short ansehen',
+        unlockShortButton: 'Short angesehen',
+        unlockShortDoneLabel: 'Short freigeschaltet',
+        smallShortHint: 'Du musst das Short ansehen und dann auf „Short angesehen“ klicken, um die Umwandlung freizuschalten.',
+        labelCaptcha: 'Gib das Ergebnis ein: 3 + 5 = ?',
+        captchaPlaceholder: 'Antwort',
+        convertButton: 'Stimme umwandeln',
+        box4Title: 'Ergebnis',
+        downloadButton: 'Audio modifiziert herunterladen',
+        clearButton: 'Ergebnis löschen',
+        box5Title: 'Freiwillige Beiträge',
+        supportText: 'Wenn du dieses Projekt unterstützen möchtest:',
+        donateButtonText: 'Über Mercado Pago spenden',
+        box6Title: 'YouTube-Videos ansehen',
+        labelYoutubeUrl: 'Füge einen YouTube-Link ein:',
+        youtubePlaceholder: 'https://www.youtube.com/watch?v=...',
+        showVideoButton: 'Video anzeigen',
+        alertNoShorts: 'Es sind noch keine Shorts konfiguriert.',
+        alertMissingAudios: 'Du musst beide Audios hochladen oder das Originalaudio aufnehmen.',
+        alertNeedShort: 'Du musst das Short ansehen und „Short angesehen“ klicken, bevor du umwandelst.',
+        alertCaptchaWrong: 'Falsches Captcha.',
+        alertServer: 'Serverfehler bei der Stimmkonvertierung.',
+        alertNetwork: 'Verbindungsfehler mit dem Server.',
+        alertInvalidYoutube: 'Ungültiger Link.',
+        alertCantParseShort: 'Der Short-Link konnte nicht interpretiert werden.',
+        alertNoResultAudio: 'Erzeuge zuerst ein modifiziertes Audio im Bereich „Ergebnis“.',
+        langLabel: 'Sprache: Deutsch ▾'
+      }
+    };
+
+    let currentLang = 'es';
+
+    // 🔹 AQUÍ VAN TUS SHORTS, EN ORDEN
+    const shortsList = [
+      "https://www.youtube.com/shorts/abcd1234",
+      "https://www.youtube.com/shorts/efgh5678"
+      // agrega más aquí...
+    ];
+
+    let currentShortIndex = 0;   // índice para ir avanzando 0,1,2,... y volver a 0
+    let shortUnlocked = false;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedSourceBlob = null;
+
+    const convertButton = document.getElementById('convertButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const clearButton = document.getElementById('clearButton');
+    const resultAudio = document.getElementById('result-audio');
+
+    const seeShortButton = document.getElementById('seeShortButton');
+    const unlockShortButton = document.getElementById('unlockShortButton');
+    const shortContainer = document.getElementById('shortContainer');
+    const captchaInput = document.getElementById('captchaInput');
+
+    const mainTitle = document.getElementById('mainTitle');
+    const subtitle = document.getElementById('subtitle');
+
+    const langToggle = document.getElementById('langToggle');
+    const langMenu   = document.getElementById('langMenu');
+
+    const box1Title = document.getElementById('box1Title');
+    const labelSourceAudio = document.getElementById('labelSourceAudio');
+    const smallSourceExample = document.getElementById('smallSourceExample');
+    const recordStartButton = document.getElementById('recordStartButton');
+    const recordStopButton = document.getElementById('recordStopButton');
+    const recordStatus = document.getElementById('recordStatus');
+
+    const box2Title = document.getElementById('box2Title');
+    const labelTargetAudio = document.getElementById('labelTargetAudio');
+    const smallTarget = document.getElementById('smallTarget');
+
+    const box3Title = document.getElementById('box3Title');
+    const labelSeeShort = document.getElementById('labelSeeShort');
+    const smallShortHint = document.getElementById('smallShortHint');
+    const labelCaptcha = document.getElementById('labelCaptcha');
+
+    const box4Title = document.getElementById('box4Title');
+
+    const box5Title = document.getElementById('box5Title');
+    const supportText = document.getElementById('supportText');
+    const donateButtonText = document.getElementById('donateButtonText');
+
+    const box6Title = document.getElementById('box6Title');
+    const labelYoutubeUrl = document.getElementById('labelYoutubeUrl');
+    const youtubeUrlInput = document.getElementById('youtubeUrl');
+    const showVideoButton = document.getElementById('showVideoButton');
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      const t = texts[lang];
+      document.documentElement.lang = lang;
+
+      mainTitle.innerHTML = t.titleHTML;
+      subtitle.innerHTML = t.subtitleHTML;
+
+      box1Title.textContent = t.box1Title;
+      labelSourceAudio.textContent = t.labelSourceAudio;
+      smallSourceExample.textContent = t.smallSourceExample;
+      recordStartButton.textContent = t.recordStart;
+      recordStopButton.textContent = t.recordStop;
+
+      box2Title.textContent = t.box2Title;
+      labelTargetAudio.textContent = t.labelTargetAudio;
+      smallTarget.textContent = t.smallTarget;
+
+      box3Title.textContent = t.box3Title;
+      labelSeeShort.textContent = t.labelSeeShort;
+      seeShortButton.textContent = t.seeShortButton;
+      smallShortHint.textContent = t.smallShortHint;
+      labelCaptcha.textContent = t.labelCaptcha;
+      captchaInput.placeholder = t.captchaPlaceholder;
+
+      if (!shortUnlocked) {
+        unlockShortButton.textContent = t.unlockShortButton;
+      } else {
+        unlockShortButton.textContent = t.unlockShortDoneLabel;
+      }
+
+      convertButton.textContent = t.convertButton;
+
+      box4Title.textContent = t.box4Title;
+      downloadButton.textContent = t.downloadButton;
+      clearButton.textContent = t.clearButton;
+
+      box5Title.textContent = t.box5Title;
+      supportText.textContent = t.supportText;
+      donateButtonText.textContent = t.donateButtonText;
+
+      box6Title.textContent = t.box6Title;
+      labelYoutubeUrl.textContent = t.labelYoutubeUrl;
+      youtubeUrlInput.placeholder = t.youtubePlaceholder;
+      showVideoButton.textContent = t.showVideoButton;
+
+      langToggle.textContent = t.langLabel;
+    }
+
+    // Idioma inicial
+    applyLanguage('es');
+
+    // Menú idioma: abrir/cerrar
+    langToggle.addEventListener('click', () => {
+      langMenu.classList.toggle('hidden');
+    });
+
+    // Seleccionar idioma
+    langMenu.querySelectorAll('button[data-lang]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        applyLanguage(lang);
+        langMenu.classList.add('hidden');
+      });
+    });
+
+    // Cerrar menú si clic fuera
+    document.addEventListener('click', (e) => {
+      if (!langMenu.contains(e.target) && !langToggle.contains(e.target)) {
+        langMenu.classList.add('hidden');
+      }
+    });
+
+    // Grabación audio
+    recordStartButton.addEventListener('click', async () => {
+      const t = texts[currentLang];
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          recordedSourceBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+          recordStatus.textContent = t.recordStatusStopped;
+          recordStopButton.disabled = true;
+          recordStartButton.disabled = false;
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        recordStatus.textContent = t.recordStatusRecording;
+        recordStartButton.disabled = true;
+        recordStopButton.disabled = false;
+      } catch (err) {
+        console.error('Error mic:', err);
+        recordStatus.textContent = t.micError;
+      }
+    });
+
+    recordStopButton.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    });
+
+    // ===== SHORTS EN ORDEN (1,2,3,... Y LUEGO VUELVE AL PRIMERO) =====
+    seeShortButton.addEventListener('click', () => {
+      const t = texts[currentLang];
+
+      if (shortsList.length === 0) {
+        alert(t.alertNoShorts);
+        return;
+      }
+
+      const url = shortsList[currentShortIndex];
+      currentShortIndex = (currentShortIndex + 1) % shortsList.length; // avanza
+
+      shortContainer.innerHTML = '';
+
+      let id = null;
+      const matchShort = url.match(/shorts\/([^?&]+)/);
+      const matchNormal = url.match(/v=([^&]+)/);
+
+      if (matchShort) {
+        id = matchShort[1];
+      } else if (matchNormal) {
+        id = matchNormal[1];
+      }
+
+      if (!id) {
+        shortContainer.innerHTML = '<p>' + t.alertCantParseShort + '</p>';
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '315';
+      iframe.src = 'https://www.youtube.com/embed/' + id;
+      iframe.frameBorder = '0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      shortContainer.appendChild(iframe);
+
+      unlockShortButton.disabled = false;
+    });
+
+    // Desbloquear captcha
+    unlockShortButton.addEventListener('click', () => {
+      const t = texts[currentLang];
+      shortUnlocked = true;
+      captchaInput.disabled = false;
+      convertButton.disabled = false;
+      unlockShortButton.textContent = t.unlockShortDoneLabel;
+      unlockShortButton.disabled = true;
+    });
+
+    // Convertir voz
+    convertButton.addEventListener('click', async () => {
+      const t = texts[currentLang];
+      const sourceInputFile = document.getElementById('sourceAudio').files[0];
+      const targetFile = document.getElementById('targetAudio').files[0];
+      const captcha = document.getElementById('captchaInput').value;
+
+      let sourceForForm = sourceInputFile;
+      if (!sourceForForm && recordedSourceBlob) {
+        sourceForForm = new File(
+          [recordedSourceBlob],
+          'grabacion_mic.webm',
+          { type: recordedSourceBlob.type || 'audio/webm' }
+        );
+      }
+
+      if (!sourceForForm || !targetFile) {
+        alert(t.alertMissingAudios);
+        return;
+      }
+      if (!shortUnlocked) {
+        alert(t.alertNeedShort);
+        return;
+      }
+      if (parseInt(captcha, 10) !== 8) {
+        alert(t.alertCaptchaWrong);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('source', sourceForForm);
+      formData.append('target', targetFile);
+
+      try {
+        const res = await fetch('/convert', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          alert(t.alertServer);
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        resultAudio.src = url;
+        downloadButton.style.display = 'inline-block';
+        downloadButton.onclick = () => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'voz_convertida.wav';
+          a.click();
+        };
+      } catch (err) {
+        console.error(err);
+        alert(t.alertNetwork);
+      }
+    });
+
+    clearButton.addEventListener('click', () => {
+      resultAudio.src = '';
+      downloadButton.style.display = 'none';
+    });
+
+    // Ver video YouTube (cuadro oculto)
+    showVideoButton.addEventListener('click', () => {
+      const t = texts[currentLang];
+      const url = youtubeUrlInput.value.trim();
+      const container = document.getElementById('videoContainer');
+      container.innerHTML = '';
+
+      if (!url) return;
+
+      const match = url.match(/v=([^&]+)/);
+      const id = match ? match[1] : null;
+
+      if (!id) {
+        container.innerHTML = '<p>' + t.alertInvalidYoutube + '</p>';
+        return;
+      }
+
+      const iframe = document.createElement('iframe');
+      iframe.width = '100%';
+      iframe.height = '315';
+      iframe.src = 'https://www.youtube.com/embed/' + id;
+      iframe.frameBorder = '0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      container.appendChild(iframe);
+    });
+  </script>
+</body>
+</html>
