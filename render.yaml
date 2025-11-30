@@ -1,4 +1,6 @@
 
+
+
 services:
   - type: web
     name: nueva-voz
@@ -6,5 +8,3 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
     pythonVersion: "3.11.9"
-
-
